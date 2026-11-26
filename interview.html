@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Interview Practice Agent</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #eef2ff; margin: 0; padding: 20px; }
+  .box { max-width: 600px; margin: auto; background: #fff; padding: 24px; border-radius: 14px; box-shadow: 0 4px 14px rgba(0,0,0,.12); }
+  h1 { text-align: center; color: #3730a3; margin-top: 0; }
+  .q { background: #e0e7ff; padding: 14px; border-radius: 10px; font-weight: bold; margin: 14px 0; }
+  textarea { width: 100%; height: 110px; padding: 10px; border-radius: 8px; border: 1px solid #aaa; box-sizing: border-box; font-size: 15px; }
+  button { background: #4f46e5; color: #fff; border: none; padding: 11px 20px; border-radius: 8px; font-size: 15px; cursor: pointer; margin-top: 10px; }
+  button:hover { background: #3730a3; }
+  .fb { background: #f0fdf4; border-left: 5px solid #22c55e; padding: 12px; margin-top: 14px; border-radius: 8px; line-height: 1.6; }
+  .score { font-size: 20px; font-weight: bold; }
+  .hidden { display: none; }
+  .small { color: #666; font-size: 13px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>🎤 Interview Practice Agent</h1>
+  <p class="small">I ask. You answer. I score and give feedback.</p>
+
+  <div id="quiz">
+    <div class="small" id="count"></div>
+    <div class="q" id="question"></div>
+    <textarea id="answer" placeholder="Type your answer here..."></textarea><br>
+    <button onclick="submitAnswer()">Submit Answer</button>
+    <div id="feedback" class="fb hidden"></div>
+    <button id="nextBtn" class="hidden" onclick="nextQuestion()">Next Question ➡</button>
+  </div>
+
+  <div id="result" class="hidden"></div>
+</div>
+
+<script>
+// Each question has keywords the agent looks for in your answer
+var questions = [
+  { q: "Tell me about yourself.", keys: ["student","college","skills","project","interest","learning","goal","engineering","experience"] },
+  { q: "What are your strengths?", keys: ["hardworking","team","learn","problem","leader","communication","discipline","quick","creative"] },
+  { q: "What is your weakness and how are you improving it?", keys: ["improve","working on","learning","practice","overcome","time","confidence","better","trying"] },
+  { q: "Why should we hire you?", keys: ["skills","team","company","contribute","learn","value","passion","dedicated","results"] },
+  { q: "Where do you see yourself in 5 years?", keys: ["grow","career","skills","leader","company","learn","goal","senior","expert"] }
+];
+
+var fillers = ["um","uh","like","basically","actually","you know","kind of"];
+var examples = ["for example","because","when i","in my project","once","i built","i made","i worked"];
+
+var current = 0;
+var totalScore = 0;
+
+showQuestion();
+
+function showQuestion() {
+  document.getElementById("count").innerText = "Question " + (current + 1) + " of " + questions.length;
+  document.getElementById("question").innerText = questions[current].q;
+  document.getElementById("answer").value = "";
+  document.getElementById("feedback").classList.add("hidden");
+  document.getElementById("nextBtn").classList.add("hidden");
+}
+
+function submitAnswer() {
+  var text = document.getElementById("answer").value.trim();
+  if (text === "") { alert("Please type an answer first."); return; }
+
+  var lower = " " + text.toLowerCase() + " ";
+  var words = text.split(/\s+/).length;
+  var score = 0;
+  var tips = [];
+
+  // 1. Length check (max 4 points)
+  if (words >= 25) { score += 4; }
+  else if (words >= 15) { score += 2; tips.push("Your answer is a bit short. Aim for 25+ words."); }
+  else { tips.push("Too short. Add more detail (25+ words)."); }
+
+  // 2. Keyword check (max 3 points)
+  var found = 0;
+  questions[current].keys.forEach(function (k) { if (lower.indexOf(k) !== -1) found++; });
+  score += Math.min(found, 3);
+  if (found < 3) { tips.push("Use more relevant points like: " + questions[current].keys.slice(0, 4).join(", ") + "."); }
+
+  // 3. Example check (max 2 points)
+  var hasExample = examples.some(function (e) { return lower.indexOf(e) !== -1; });
+  if (hasExample) { score += 2; } else { tips.push("Add a real example, e.g. 'In my project, I...'"); }
+
+  // 4. Filler words check (1 point)
+  var fillerCount = 0;
+  fillers.forEach(function (f) { if (lower.indexOf(" " + f + " ") !== -1) fillerCount++; });
+  if (fillerCount === 0) { score += 1; } else { tips.push("Avoid filler words like um, like, basically."); }
+
+  totalScore += score;
+
+  var msg = "<div class='score'>Score: " + score + " / 10</div>";
+  if (tips.length === 0) { msg += "✅ Excellent answer! Confident and clear."; }
+  else { msg += "<b>Tips to improve:</b><br>• " + tips.join("<br>• "); }
+
+  var fb = document.getElementById("feedback");
+  fb.innerHTML = msg;
+  fb.classList.remove("hidden");
+  document.getElementById("nextBtn").classList.remove("hidden");
+  document.getElementById("nextBtn").innerText = (current === questions.length - 1) ? "See Final Result 🏁" : "Next Question ➡";
+}
+
+function nextQuestion() {
+  current++;
+  if (current < questions.length) { showQuestion(); }
+  else { showResult(); }
+}
+
+function showResult() {
+  document.getElementById("quiz").classList.add("hidden");
+  var max = questions.length * 10;
+  var percent = Math.round((totalScore / max) * 100);
+  var verdict;
+  if (percent >= 75) verdict = "🌟 Interview Ready! Great job.";
+  else if (percent >= 50) verdict = "👍 Good start. Practice with more examples.";
+  else verdict = "💪 Keep practicing. Give longer answers with examples.";
+
+  var r = document.getElementById("result");
+  r.innerHTML = "<h2>Final Result</h2><div class='score'>" + totalScore + " / " + max + " (" + percent + "%)</div><p>" + verdict + "</p><button onclick='location.reload()'>Try Again 🔄</button>";
+  r.classList.remove("hidden");
+}
+</script>
+</body>
+</html>

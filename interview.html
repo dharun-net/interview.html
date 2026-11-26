@@ -36,7 +36,6 @@
 </div>
 
 <script>
-// Each question has keywords the agent looks for in your answer
 var questions = [
   { q: "Tell me about yourself.", keys: ["student","college","skills","project","interest","learning","goal","engineering","experience"] },
   { q: "What are your strengths?", keys: ["hardworking","team","learn","problem","leader","communication","discipline","quick","creative"] },
@@ -70,22 +69,18 @@ function submitAnswer() {
   var score = 0;
   var tips = [];
 
-  // 1. Length check (max 4 points)
   if (words >= 25) { score += 4; }
   else if (words >= 15) { score += 2; tips.push("Your answer is a bit short. Aim for 25+ words."); }
   else { tips.push("Too short. Add more detail (25+ words)."); }
 
-  // 2. Keyword check (max 3 points)
   var found = 0;
   questions[current].keys.forEach(function (k) { if (lower.indexOf(k) !== -1) found++; });
   score += Math.min(found, 3);
   if (found < 3) { tips.push("Use more relevant points like: " + questions[current].keys.slice(0, 4).join(", ") + "."); }
 
-  // 3. Example check (max 2 points)
   var hasExample = examples.some(function (e) { return lower.indexOf(e) !== -1; });
   if (hasExample) { score += 2; } else { tips.push("Add a real example, e.g. 'In my project, I...'"); }
 
-  // 4. Filler words check (1 point)
   var fillerCount = 0;
   fillers.forEach(function (f) { if (lower.indexOf(" " + f + " ") !== -1) fillerCount++; });
   if (fillerCount === 0) { score += 1; } else { tips.push("Avoid filler words like um, like, basically."); }
